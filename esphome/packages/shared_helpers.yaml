@@ -1,0 +1,64 @@
+sensor:
+  - platform: wifi_signal
+    name: "WIFI Signal Strength"
+    device_class: signal_strength
+    state_class: measurement
+    unit_of_measurement: "dBm"
+    update_interval: 60s
+    id: wifi_signal_strength
+    icon: "mdi:wifi-strength-3"
+    web_server:
+      sorting_group_id: sorting_group_diagnostic
+
+text_sensor:
+  - platform: version
+    name: "Firmware Version"
+    entity_category: diagnostic
+    id: firmware_version
+    icon: "mdi:information-variant"
+    web_server:
+      sorting_group_id: sorting_group_diagnostic
+    
+  - platform: wifi_info
+    ssid:
+      name: "WIFI SSID"
+      entity_category: diagnostic
+      id: wifi_ssid
+      icon: "mdi:wifi"
+    ip_address:
+      name: "IP Address"
+      entity_category: diagnostic
+      id: ip_address
+      icon: "mdi:ip"
+      web_server:
+        sorting_group_id: sorting_group_diagnostic
+
+  - platform: template
+    name: "WIFI Protocol"
+    entity_category: diagnostic
+    id: wifi_protocol
+    icon: "mdi:wifi-cog"
+    lambda: |-
+      return get_negotiated_wifi_protocol();
+    update_interval: 300s
+    web_server:
+      sorting_group_id: sorting_group_diagnostic
+
+  - platform: template
+    name: "Software Version"
+    entity_category: diagnostic
+    id: software_version
+    icon: "mdi:information-variant"
+    lambda: |-
+      return std::string("${sw_version}");
+    web_server:
+      sorting_group_id: sorting_group_diagnostic
+
+  - platform: uptime
+    name: "System Uptime"
+    format:
+      separator: " "
+    id: system_uptime
+    icon: "mdi:clock-start"
+    web_server:
+      sorting_group_id: sorting_group_diagnostic
