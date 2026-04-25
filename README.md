@@ -30,7 +30,7 @@ This project exposes a calibrated soil moisture percentage, a diagnostic voltage
 
 ### Hardware
 - ESP32-C6-Zero or compatible ESP32-C6 board
-- Capacitive soil moisture sensor with analog output
+- Capacitive soil moisture sensor V2.0 with analog output
 - USB-C cable for the initial flash
 
 ## Setup
