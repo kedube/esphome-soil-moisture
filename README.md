@@ -19,7 +19,8 @@ This project exposes a calibrated soil moisture percentage, a diagnostic voltage
 - Local web interface with authentication
 - OTA firmware updates
 - Soil moisture percentage derived from sensor voltage
-- Diagnostic voltage sensor for calibration
+- Diagnostic `Soil Moisture Voltage` sensor for calibration
+- User-facing `Soil Moisture Percentage` sensor derived from configurable dry and wet voltages
 - Wi-Fi signal, SSID, IP address, uptime, and firmware version sensors
 - ESP32-C6 status LED with state-based color/effect changes
 
@@ -82,11 +83,16 @@ Common values you may want to change:
 - `dry_voltage`
 - `wet_voltage`
 
-The default calibration assumes:
-- `dry_voltage: "2.4"`
-- `wet_voltage: "1.0"`
+The current default calibration in this repository is:
+- `dry_voltage: "2.2"`
+- `wet_voltage: "1.8"`
 
 If your sensor reports different voltages, update those values after measuring the probe in dry air and then in water or very wet soil.
+
+The percentage sensor is calculated from the voltage sensor using this mapping:
+- `x >= dry_voltage` becomes `0%`
+- `x <= wet_voltage` becomes `100%`
+- values between them are linearly interpolated
 
 ### 5. Validate the Configuration
 
@@ -120,7 +126,8 @@ Once the device is online, it should be discovered by the ESPHome integration in
 
 ## Calibration Notes
 
-- The diagnostic voltage sensor is the best way to tune calibration.
+- The `Soil Moisture Voltage` diagnostic sensor is the best way to tune calibration.
+- The `Soil Moisture Percentage` entity is calculated directly from that voltage reading.
 - A dry probe should read near `dry_voltage` and produce a moisture value near `0%`.
 - A soaked probe should read near `wet_voltage` and produce a moisture value near `100%`.
 - If the moisture percentage looks inverted or stuck near one extreme, update the two voltage thresholds in `esphome/settings.yaml`.
