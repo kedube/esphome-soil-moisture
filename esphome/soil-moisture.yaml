@@ -36,25 +36,12 @@ web_server:
   auth:
     username: !secret web_server_username
     password: !secret web_server_password
-  sorting_groups:
-    - id: sorting_group_sensors
-      name: "Sensors"
-      sorting_weight: 1
-    - id: sorting_group_settings
-      name: "Settings"
-      sorting_weight: 2
-    - id: sorting_group_diagnostic
-      name: "Diagnostic"
-      sorting_weight: 3
-    - id: sorting_group_system
-      name: "System Management"
-      sorting_weight: 4
 
 sensor:
   - platform: adc
     id: soil_moisture_voltage
     pin: ${sensor_gpio}
-    name: "${friendly_name} Voltage"
+    name: "Soil Moisture Voltage"
     device_class: voltage
     state_class: measurement
     unit_of_measurement: "V"
@@ -63,13 +50,10 @@ sensor:
     attenuation: 12db
     update_interval: ${update_interval}
     samples: 8
-    entity_category: diagnostic
-    web_server:
-      sorting_group_id: sorting_group_sensors
 
   - platform: copy
     source_id: soil_moisture_voltage
-    name: "${friendly_name} Percentage"
+    name: "Soil Moisture Percentage"
     device_class: moisture
     unit_of_measurement: "%"
     state_class: measurement
@@ -92,5 +76,3 @@ sensor:
       - sliding_window_moving_average:
           window_size: 5
           send_every: 1
-    web_server:
-      sorting_group_id: sorting_group_sensors

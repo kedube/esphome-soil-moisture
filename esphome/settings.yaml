@@ -2,9 +2,9 @@ substitutions:
   device_name: "soil-moisture"
   friendly_name: "Soil Moisture"
   device_description: "ESP32 capacitive soil moisture sensor"
-  update_interval: 60s
-  dry_voltage: "2.4"
-  wet_voltage: "1.0"
+  update_interval: 30s
+  dry_voltage: "2.2"
+  wet_voltage: "1.8"
   sw_version: "0.1"
   sensor_gpio: GPIO0
   status_led_pin: GPIO8
