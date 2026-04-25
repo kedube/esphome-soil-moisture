@@ -22,7 +22,38 @@ This project exposes a calibrated soil moisture percentage, a diagnostic voltage
 - Diagnostic `Soil Moisture Voltage` sensor for calibration
 - User-facing `Soil Moisture Percentage` sensor derived from configurable dry and wet voltages
 - Wi-Fi signal, SSID, IP address, uptime, and firmware version sensors
+- Wi-Fi protocol diagnostic text sensor powered by `include/wifi_protocol_helper.h`
 - ESP32-C6 status LED with state-based color/effect changes
+
+## Current Configuration
+
+### Device Configuration
+- Board: `esp32-c6-devkitc-1`
+- Variant: `esp32c6`
+- Framework: ESP-IDF
+- Flash size: `8MB`
+- CPU frequency: `160MHz`
+- OTA rollback: enabled
+
+### Main Entities
+- `Soil Moisture Percentage`
+- `Soil Moisture Voltage`
+- `WIFI Signal Strength`
+- `WIFI SSID`
+- `IP Address`
+- `WIFI Protocol`
+- `Firmware Version`
+- `Software Version`
+- `System Uptime`
+
+### Status LED Behavior
+The onboard WS2812 status LED is connected to `GPIO8` by default and uses color/effect states managed in `esphome/packages/device_esp32c6.yaml`.
+
+- Blue pulse while booting
+- Red pulse when Wi-Fi is disconnected
+- Yellow pulse when appliances are configured but not connected
+- White pulse when Wi-Fi is up but no API client is connected
+- Purple pulse during normal connected operation
 
 ## Requirements
 
@@ -77,15 +108,17 @@ Project-specific substitutions are defined in `esphome/settings.yaml`.
 Common values you may want to change:
 - `device_name`
 - `friendly_name`
+- `device_description`
 - `update_interval`
+- `sw_version`
 - `sensor_gpio`
 - `status_led_pin`
 - `dry_voltage`
 - `wet_voltage`
 
 The current default calibration in this repository is:
-- `dry_voltage: "2.2"`
-- `wet_voltage: "1.8"`
+- `dry_voltage: "2.4"`
+- `wet_voltage: "1.0"`
 
 If your sensor reports different voltages, update those values after measuring the probe in dry air and then in water or very wet soil.
 
@@ -93,6 +126,8 @@ The percentage sensor is calculated from the voltage sensor using this mapping:
 - `x >= dry_voltage` becomes `0%`
 - `x <= wet_voltage` becomes `100%`
 - values between them are linearly interpolated
+
+This means the current configuration expects higher voltage when the probe is dry and lower voltage when the probe is wet.
 
 ### 5. Validate the Configuration
 
@@ -121,6 +156,8 @@ When prompted, choose the OTA device instead of the USB serial port.
 ### 8. Web UI
 The built-in ESPHome web server starts on port `80`. Open the device on your local network and sign in with the username and password configured in `esphome/secrets.yaml`.
 
+The web UI exposes the moisture, voltage, and diagnostic entities defined in the main YAML and helper package.
+
 ### 9. Home Assistant
 Once the device is online, it should be discovered by the ESPHome integration in Home Assistant. Use the same `encryption_key` configured in `esphome/secrets.yaml` when adding it.
 
@@ -131,6 +168,7 @@ Once the device is online, it should be discovered by the ESPHome integration in
 - A dry probe should read near `dry_voltage` and produce a moisture value near `0%`.
 - A soaked probe should read near `wet_voltage` and produce a moisture value near `100%`.
 - If the moisture percentage looks inverted or stuck near one extreme, update the two voltage thresholds in `esphome/settings.yaml`.
+- If your measured dry voltage is lower than your measured wet voltage, the sensor wiring or hardware behavior differs from the default assumption and the thresholds should be adjusted accordingly.
 
 ## Wiring Notes
 
