@@ -1,13 +1,22 @@
 # ESPHome Soil Moisture Sensor
-ESPHome configuration for a capacitive soil moisture sensor running on an **ESP32-C6-Zero**.
+ESPHome configuration for a capacitive soil moisture sensor running on either an **ESP32-C6-Zero** or a **WeMos D1 mini Pro**.
 
 This project exposes a calibrated soil moisture percentage, a diagnostic voltage reading, Wi-Fi diagnostics, and a simple local web UI. It is designed to be easy to flash, adjust, and integrate with Home Assistant.
+
+## Supported Devices
+
+| Device | ESPHome Entry File | Notes |
+| :--- | :--- | :--- |
+| ESP32-C6-Zero | `esphome/soil-moisture.yaml` | Default configuration, ESP-IDF build, GPIO0 analog input, WS2812 RGB status LED on GPIO8, Wi-Fi protocol diagnostic sensor |
+| WeMos D1 mini Pro | `esphome/soil-moisture.yaml` | Uses the same main YAML after switching the settings and device package includes to the WeMos variants |
 
 ## Repository Layout
 
 - `esphome/soil-moisture.yaml` is the main ESPHome entry file.
-- `esphome/settings.yaml` contains shared substitutions such as device name, update interval, GPIO selection, and moisture calibration voltages.
+- `esphome/settings.yaml` contains ESP32-C6 substitutions such as device name, update interval, GPIO selection, and moisture calibration voltages.
+- `esphome/settings_wemosd1.yaml` contains the WeMos D1 mini Pro substitutions and defaults.
 - `esphome/packages/device_esp32c6.yaml` contains the ESP32-C6-specific board settings and status LED behavior.
+- `esphome/packages/device_wemosd1.yaml` contains the ESP8266 / WeMos D1 mini Pro board settings and ADC configuration.
 - `esphome/packages/shared_helpers.yaml` contains shared diagnostic sensors and text sensors.
 - `esphome/examples/secrets-example.yaml` contains the template for the secrets file used by the main configuration.
 - `include/status_led_helper.h` contains the status LED state logic.
@@ -22,18 +31,33 @@ This project exposes a calibrated soil moisture percentage, a diagnostic voltage
 - Diagnostic `Soil Moisture Voltage` sensor for calibration
 - User-facing `Soil Moisture Percentage` sensor derived from configurable dry and wet voltages
 - Wi-Fi signal, SSID, IP address, uptime, and firmware version sensors
-- Wi-Fi protocol diagnostic text sensor powered by `include/wifi_protocol_helper.h`
-- ESP32-C6 status LED with state-based color/effect changes
+- Wi-Fi protocol diagnostic text sensor on the ESP32-C6 build, powered by `include/wifi_protocol_helper.h`
+- Status LED support on both platforms
 
 ## Current Configuration
 
-### Device Configuration
+### ESP32-C6 Configuration
+
+- Main file: `esphome/soil-moisture.yaml`
 - Board: `esp32-c6-devkitc-1`
 - Variant: `esp32c6`
 - Framework: ESP-IDF
 - Flash size: `8MB`
 - CPU frequency: `160MHz`
+- Sensor input pin: `GPIO0`
+- Status LED pin: `GPIO8`
 - OTA rollback: enabled
+
+### WeMos D1 mini Pro Configuration
+
+- Main file: `esphome/soil-moisture.yaml`
+- Settings file: `esphome/settings_wemosd1.yaml`
+- Device package: `esphome/packages/device_wemosd1.yaml`
+- Board: `d1_mini_pro`
+- Framework: Arduino / ESP8266
+- Sensor input pin: `A0`
+- Status LED pin: `GPIO2`
+- ADC voltage scaling: `multiply: 3.3`
 
 ### Main Entities
 - `Soil Moisture Percentage`
@@ -41,12 +65,14 @@ This project exposes a calibrated soil moisture percentage, a diagnostic voltage
 - `WIFI Signal Strength`
 - `WIFI SSID`
 - `IP Address`
-- `WIFI Protocol`
 - `Firmware Version`
 - `Software Version`
 - `System Uptime`
 
-### Status LED Behavior
+The ESP32-C6 build also exposes:
+- `WIFI Protocol`
+
+### ESP32-C6 Status LED Behavior
 The onboard WS2812 status LED is connected to `GPIO8` by default and uses color/effect states managed in `esphome/packages/device_esp32c6.yaml`.
 
 - Blue pulse while booting
@@ -55,15 +81,18 @@ The onboard WS2812 status LED is connected to `GPIO8` by default and uses color/
 - White pulse when Wi-Fi is up but no API client is connected
 - Purple pulse during normal connected operation
 
+### WeMos D1 mini Pro Status LED Behavior
+The WeMos build uses a single active-low `status_led` light on `GPIO2`. It provides simple built-in ESPHome status indication rather than the multi-color WS2812 behavior used on the ESP32-C6 build.
+
 ## Requirements
 
 ### Software
 - ESPHome installed locally
 
 ### Hardware
-- ESP32-C6-Zero or compatible ESP32-C6 board
+- ESP32-C6-Zero, WeMos D1 mini Pro, or compatible board for the selected entry file
 - Capacitive soil moisture sensor V2.0 with analog output
-- USB-C cable for the initial flash
+- USB cable for the initial flash
 
 ## Setup
 
@@ -102,8 +131,32 @@ Important values include:
 
 Generate a valid 32-byte API encryption key and paste it into `encryption_key`. ESPHome documents that process here: [ESPHome API encryption](https://esphome.io/components/api/).
 
-### 4. Review Shared Settings
-Project-specific substitutions are defined in `esphome/settings.yaml`.
+### 4. Choose the Device Configuration
+Use `esphome/soil-moisture.yaml` for both boards.
+
+For the default ESP32-C6 configuration, leave the package includes as they are:
+
+```yaml
+packages:
+  settings: !include settings.yaml
+  helpers: !include packages/shared_helpers.yaml
+  esp32c6: !include packages/device_esp32c6.yaml
+```
+
+For the WeMos D1 mini Pro, switch the includes to:
+
+```yaml
+packages:
+  settings: !include settings_wemosd1.yaml
+  helpers: !include packages/shared_helpers.yaml
+  wemosd1: !include packages/device_wemosd1.yaml
+```
+
+### 5. Review Device Settings
+Project-specific substitutions are defined in the device settings file:
+
+- ESP32-C6-Zero: `esphome/settings.yaml`
+- WeMos D1 mini Pro: `esphome/settings_wemosd1.yaml`
 
 Common values you may want to change:
 - `device_name`
@@ -129,14 +182,16 @@ The percentage sensor is calculated from the voltage sensor using this mapping:
 
 This means the current configuration expects higher voltage when the probe is dry and lower voltage when the probe is wet.
 
-### 5. Validate the Configuration
+On the WeMos D1 mini Pro build, the ADC sensor is scaled with `multiply: 3.3` so the reported voltage matches the board's analog input divider behavior.
+
+### 6. Validate the Configuration
 
 ```bash
 esphome config esphome/soil-moisture.yaml
 ```
 
-### 6. Build and Flash
-For the first flash, connect the ESP32-C6 board over USB and run:
+### 7. Build and Flash
+For the first flash, connect the board over USB and run:
 
 ```bash
 esphome run esphome/soil-moisture.yaml
@@ -144,7 +199,7 @@ esphome run esphome/soil-moisture.yaml
 
 After a successful build, ESPHome will prompt you to choose the upload target.
 
-### 7. Subsequent Updates
+### 8. Subsequent Updates
 After the initial USB flash, updates can be installed over the air:
 
 ```bash
@@ -153,12 +208,12 @@ esphome run esphome/soil-moisture.yaml
 
 When prompted, choose the OTA device instead of the USB serial port.
 
-### 8. Web UI
+### 9. Web UI
 The built-in ESPHome web server starts on port `80`. Open the device on your local network and sign in with the username and password configured in `esphome/secrets.yaml`.
 
 The web UI exposes the moisture, voltage, and diagnostic entities defined in the main YAML and helper package.
 
-### 9. Home Assistant
+### 10. Home Assistant
 Once the device is online, it should be discovered by the ESPHome integration in Home Assistant. Use the same `encryption_key` configured in `esphome/secrets.yaml` when adding it.
 
 ## Calibration Notes
@@ -172,6 +227,12 @@ Once the device is online, it should be discovered by the ESPHome integration in
 
 ## Wiring Notes
 
+### ESP32-C6-Zero
 - The soil moisture sensor analog output is connected to `GPIO0` by default.
 - The status LED is connected to `GPIO8` by default.
 - Both pins can be changed in `esphome/settings.yaml`.
+
+### WeMos D1 mini Pro
+- The soil moisture sensor analog output is connected to `A0` by default.
+- The built-in status LED uses `GPIO2` by default.
+- Both pins can be changed in `esphome/settings_wemosd1.yaml`, but `A0` is the only ADC input available on ESP8266 in ESPHome.

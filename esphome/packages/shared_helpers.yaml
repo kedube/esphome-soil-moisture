@@ -22,15 +22,6 @@ text_sensor:
       icon: "mdi:ip"
 
   - platform: template
-    name: "WIFI Protocol"
-    entity_category: diagnostic
-    id: wifi_protocol
-    icon: "mdi:wifi-cog"
-    lambda: |-
-      return get_negotiated_wifi_protocol();
-    update_interval: 300s
-
-  - platform: template
     name: "Software Version"
     entity_category: diagnostic
     id: software_version

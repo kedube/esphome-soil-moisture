@@ -37,6 +37,9 @@ api:
       - script.execute: update_status_led
 
 esphome:
+  includes:
+    - ../include/status_led_helper.h
+    - ../include/wifi_protocol_helper.h
   on_boot:
     - priority: -10
       then:
@@ -113,6 +116,56 @@ wifi:
     - lambda: |-
         id(status_wifi_connected) = false;
     - script.execute: update_status_led
+
+sensor:
+  - platform: adc
+    id: soil_moisture_voltage
+    pin: ${sensor_gpio}
+    name: "Soil Moisture Voltage"
+    device_class: voltage
+    state_class: measurement
+    unit_of_measurement: "V"
+    accuracy_decimals: 3
+    icon: mdi:flash
+    attenuation: 12db
+    update_interval: ${update_interval}
+    samples: 8
+
+  - platform: copy
+    source_id: soil_moisture_voltage
+    name: "Soil Moisture Percentage"
+    device_class: moisture
+    unit_of_measurement: "%"
+    state_class: measurement
+    accuracy_decimals: 0
+    icon: mdi:sprout
+    filters:
+      - lambda: |-
+          const float dry = ${dry_voltage};
+          const float wet = ${wet_voltage};
+          if (x >= dry) {
+            return 0.0f;
+          }
+          if (x <= wet) {
+            return 100.0f;
+          }
+          return (dry - x) * 100.0f / (dry - wet);
+      - clamp:
+          min_value: 0
+          max_value: 100
+      - sliding_window_moving_average:
+          window_size: 5
+          send_every: 1
+
+text_sensor:
+  - platform: template
+    name: "WIFI Protocol"
+    entity_category: diagnostic
+    id: wifi_protocol
+    icon: "mdi:wifi-cog"
+    lambda: |-
+      return get_negotiated_wifi_protocol();
+    update_interval: 300s
 
 script:
   - id: update_status_led
